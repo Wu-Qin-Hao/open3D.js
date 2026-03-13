@@ -1,0 +1,22 @@
+{
+  "name": "open3d.js",
+  "version": "1.0.0",
+  "description": "3D rendering library",
+  "main": "dist/open3d.umd.js",
+  "module": "dist/open3d.es.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "keywords": [
+    "3d",
+    "rendering",
+    "webgl"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^6.0.0"
+  }
+}
