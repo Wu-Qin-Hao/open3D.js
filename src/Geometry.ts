@@ -85,3 +85,13 @@ export class LineGeometry extends Geometry {
     this.lineWidth = width;
   }
 }
+
+export class TriangleGeometry extends Geometry {
+  constructor(vertices: Float32Array, shader: Shader) {
+    super(vertices, shader);
+  }
+
+  protected draw(gl: WebGL2RenderingContext) {
+    gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length / 3);
+  }
+}
