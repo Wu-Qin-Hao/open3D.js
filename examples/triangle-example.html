@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Line Rendering Example</title>
+    <title>Triangle Rendering Example</title>
     <style>
       body {
         margin: 0;
@@ -20,10 +20,10 @@
     <script type="module">
       import {
         Renderer,
-        LineGeometry,
+        TriangleGeometry,
         createPointShader,
         Point,
-      } from "./src/index.ts";
+      } from "../src/index.ts";
 
       // 获取canvas元素
       const canvas = document.getElementById("canvas");
@@ -36,13 +36,11 @@
       const renderer = new Renderer(canvas);
       renderer.setSize(canvas.width, canvas.height);
 
-      // 创建线数据 - 矩形
+      // 创建三角形数据
       const points = [
-        new Point(-0.5, -0.5, 0),
-        new Point(0.5, -0.5, 0),
-        // new Point(0.5, 0.5, 0),
-        // new Point(-0.5, 0.5, 0),
-        // new Point(-0.5, -0.5, 0) // 闭合线条
+        new Point(0, 0.5, 0), // 顶点1
+        new Point(-0.5, -0.5, 0), // 顶点2
+        new Point(0.5, -0.5, 0), // 顶点3
       ];
 
       // 将点转换为Float32Array
@@ -50,14 +48,14 @@
         points.flatMap((point) => point.toArray()),
       );
 
-      // 创建点着色器（线渲染也可以使用相同的着色器）
+      // 创建点着色器（三角形渲染也可以使用相同的着色器）
       const shader = createPointShader(renderer.gl);
 
-      // 创建线几何体
-      const lineGeometry = new LineGeometry(vertices, shader, 2.0);
+      // 创建三角形几何体
+      const triangleGeometry = new TriangleGeometry(vertices, shader);
 
       // 添加几何体到渲染器
-      renderer.addGeometry(lineGeometry);
+      renderer.addGeometry(triangleGeometry);
 
       // 渲染循环
       function animate() {
