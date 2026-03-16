@@ -1,4 +1,5 @@
 import { Shader } from "./Shader";
+import { Camera } from "./Camera";
 
 export class Geometry {
   protected vertices: Float32Array;
@@ -27,12 +28,16 @@ export class Geometry {
     }
   }
 
-  render(gl: WebGL2RenderingContext) {
+  render(gl: WebGL2RenderingContext, camera: Camera) {
     if (!this.vertexBuffer) {
       this.init(gl);
     }
 
     this.shader.use(gl);
+
+    // 传递MVP矩阵
+    const mvpLocation = gl.getUniformLocation(this.shader.program, "uMVP");
+    gl.uniformMatrix4fv(mvpLocation, false, camera.getMVPMatrix());
 
     // 绑定顶点缓冲区
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -72,8 +77,8 @@ export class PointGeometry extends Geometry {
     this.pointSize = pointSize;
   }
 
-  render(gl: WebGL2RenderingContext) {
-    super.render(gl);
+  render(gl: WebGL2RenderingContext, camera: Camera) {
+    super.render(gl, camera);
     gl.uniform1f(
       gl.getUniformLocation(this.shader.program, "uPointSize"),
       this.pointSize,
@@ -102,8 +107,8 @@ export class LineGeometry extends Geometry {
     this.lineWidth = lineWidth;
   }
 
-  render(gl: WebGL2RenderingContext) {
-    super.render(gl);
+  render(gl: WebGL2RenderingContext, camera: Camera) {
+    super.render(gl, camera);
     gl.lineWidth(this.lineWidth);
   }
 

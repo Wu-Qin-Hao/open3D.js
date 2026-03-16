@@ -59,10 +59,11 @@ export function createPointShader(gl: WebGL2RenderingContext): Shader {
     attribute vec3 aPosition;
     attribute vec4 aColor;
     uniform float uPointSize;
+    uniform mat4 uMVP;
     varying vec4 vColor;
     
     void main() {
-      gl_Position = vec4(aPosition, 1.0);
+      gl_Position = uMVP * vec4(aPosition, 1.0);
       gl_PointSize = uPointSize;
       vColor = aColor;
     }
@@ -83,10 +84,11 @@ export function createColorShader(gl: WebGL2RenderingContext): Shader {
   const vertexShaderSource = `
     attribute vec3 aPosition;
     attribute vec4 aColor;
+    uniform mat4 uMVP;
     varying vec4 vColor;
     
     void main() {
-      gl_Position = vec4(aPosition, 1.0);
+      gl_Position = uMVP * vec4(aPosition, 1.0);
       vColor = aColor;
     }
   `;

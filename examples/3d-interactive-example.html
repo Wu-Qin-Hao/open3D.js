@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Interactive Example</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+      .info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="info">
+      <p>Drag to rotate</p>
+      <p>Scroll to zoom</p>
+    </div>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+      import {
+        Renderer,
+        TriangleGeometry,
+        PointGeometry,
+        LineGeometry,
+        createColorShader,
+        createPointShader,
+        Controls,
+      } from "../src/index.ts";
+
+      // 创建画布
+      const canvas = document.getElementById("canvas");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // 创建渲染器
+      const renderer = new Renderer(canvas);
+
+      // 创建相机控制器
+      const controls = new Controls(renderer.getCamera(), canvas);
+
+      // 创建着色器
+      const colorShader = createColorShader(renderer.gl);
+      const pointShader = createPointShader(renderer.gl);
+
+      // 创建一个立方体的顶点
+      const cubeVertices = new Float32Array([
+        // 前面
+        -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
+        // 后面
+        -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0,
+      ]);
+
+      // 创建立方体的颜色
+      const cubeColors = new Float32Array([
+        // 前面 - 红色
+        1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
+        0.0, 1.0,
+        // 后面 - 蓝色
+        1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
+        0.0, 1.0,
+      ]);
+
+      // 创建立方体的面
+      const cubeIndices = new Float32Array([
+        // 前面
+        0, 1, 2, 0, 2, 3,
+        // 右面
+        1, 5, 6, 1, 6, 2,
+        // 后面
+        5, 4, 7, 5, 7, 6,
+        // 左面
+        4, 0, 3, 4, 3, 7,
+        // 顶面
+        3, 2, 6, 3, 6, 7,
+        // 底面
+        4, 5, 1, 4, 1, 0,
+      ]);
+
+      // 创建立方体的每个面
+      for (let i = 0; i < cubeIndices.length; i += 3) {
+        const faceVertices = new Float32Array([
+          cubeVertices[cubeIndices[i] * 3],
+          cubeVertices[cubeIndices[i] * 3 + 1],
+          cubeVertices[cubeIndices[i] * 3 + 2],
+          cubeVertices[cubeIndices[i + 1] * 3],
+          cubeVertices[cubeIndices[i + 1] * 3 + 1],
+          cubeVertices[cubeIndices[i + 1] * 3 + 2],
+          cubeVertices[cubeIndices[i + 2] * 3],
+          cubeVertices[cubeIndices[i + 2] * 3 + 1],
+          cubeVertices[cubeIndices[i + 2] * 3 + 2],
+        ]);
+        const faceColors = new Float32Array([
+          cubeColors[cubeIndices[i] * 4],
+          cubeColors[cubeIndices[i] * 4 + 1],
+          cubeColors[cubeIndices[i] * 4 + 2],
+          cubeColors[cubeIndices[i] * 4 + 3],
+          cubeColors[cubeIndices[i + 1] * 4],
+          cubeColors[cubeIndices[i + 1] * 4 + 1],
+          cubeColors[cubeIndices[i + 1] * 4 + 2],
+          cubeColors[cubeIndices[i + 1] * 4 + 3],
+          cubeColors[cubeIndices[i + 2] * 4],
+          cubeColors[cubeIndices[i + 2] * 4 + 1],
+          cubeColors[cubeIndices[i + 2] * 4 + 2],
+          cubeColors[cubeIndices[i + 2] * 4 + 3],
+        ]);
+        const triangleGeometry = new TriangleGeometry(
+          faceVertices,
+          colorShader,
+          faceColors,
+        );
+        renderer.addGeometry(triangleGeometry);
+      }
+
+      // 创建坐标轴
+      const axisVertices = new Float32Array([
+        // X轴 (红色)
+        -3.0, 0.0, 0.0, 3.0, 0.0, 0.0,
+        // Y轴 (绿色)
+        0.0, -3.0, 0.0, 0.0, 3.0, 0.0,
+        // Z轴 (蓝色)
+        0.0, 0.0, -3.0, 0.0, 0.0, 3.0,
+      ]);
+
+      const axisColors = new Float32Array([
+        // X轴 (红色)
+        1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+        // Y轴 (绿色)
+        0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+        // Z轴 (蓝色)
+        0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0,
+      ]);
+
+      // X轴
+      const xAxisGeometry = new LineGeometry(
+        new Float32Array([
+          axisVertices[0],
+          axisVertices[1],
+          axisVertices[2],
+          axisVertices[3],
+          axisVertices[4],
+          axisVertices[5],
+        ]),
+        colorShader,
+        2.0,
+        new Float32Array([
+          axisColors[0],
+          axisColors[1],
+          axisColors[2],
+          axisColors[3],
+          axisColors[4],
+          axisColors[5],
+          axisColors[6],
+          axisColors[7],
+        ]),
+      );
+      renderer.addGeometry(xAxisGeometry);
+
+      // Y轴
+      const yAxisGeometry = new LineGeometry(
+        new Float32Array([
+          axisVertices[6],
+          axisVertices[7],
+          axisVertices[8],
+          axisVertices[9],
+          axisVertices[10],
+          axisVertices[11],
+        ]),
+        colorShader,
+        2.0,
+        new Float32Array([
+          axisColors[8],
+          axisColors[9],
+          axisColors[10],
+          axisColors[11],
+          axisColors[12],
+          axisColors[13],
+          axisColors[14],
+          axisColors[15],
+        ]),
+      );
+      renderer.addGeometry(yAxisGeometry);
+
+      // Z轴
+      const zAxisGeometry = new LineGeometry(
+        new Float32Array([
+          axisVertices[12],
+          axisVertices[13],
+          axisVertices[14],
+          axisVertices[15],
+          axisVertices[16],
+          axisVertices[17],
+        ]),
+        colorShader,
+        2.0,
+        new Float32Array([
+          axisColors[16],
+          axisColors[17],
+          axisColors[18],
+          axisColors[19],
+          axisColors[20],
+          axisColors[21],
+          axisColors[22],
+          axisColors[23],
+        ]),
+      );
+      renderer.addGeometry(zAxisGeometry);
+
+      // 动画循环
+      function animate() {
+        renderer.render();
+        requestAnimationFrame(animate);
+      }
+
+      // 窗口大小变化处理
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // 开始动画
+      animate();
+    </script>
+  </body>
+</html>
