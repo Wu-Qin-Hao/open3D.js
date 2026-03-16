@@ -22,6 +22,7 @@
         Renderer,
         TriangleGeometry,
         createPointShader,
+        createColorShader,
         Point,
       } from "../src/index.ts";
 
@@ -43,16 +44,39 @@
         new Point(0.5, -0.5, 0), // 顶点3
       ];
 
+      // 创建颜色数据
+      const colors = [
+        1.0,
+        0.0,
+        0.0,
+        1.0, // 红色
+        0.0,
+        1.0,
+        0.0,
+        1.0, // 绿色
+        0.0,
+        0.0,
+        1.0,
+        1.0, // 蓝色
+      ];
+
       // 将点转换为Float32Array
       const vertices = new Float32Array(
         points.flatMap((point) => point.toArray()),
       );
 
-      // 创建点着色器（三角形渲染也可以使用相同的着色器）
-      const shader = createPointShader(renderer.gl);
+      // 创建颜色数组
+      const colorArray = new Float32Array(colors);
+
+      // 创建颜色着色器
+      const shader = createColorShader(renderer.gl);
 
       // 创建三角形几何体
-      const triangleGeometry = new TriangleGeometry(vertices, shader);
+      const triangleGeometry = new TriangleGeometry(
+        vertices,
+        shader,
+        colorArray,
+      );
 
       // 添加几何体到渲染器
       renderer.addGeometry(triangleGeometry);

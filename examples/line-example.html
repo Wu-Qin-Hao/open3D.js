@@ -22,6 +22,7 @@
         Renderer,
         LineGeometry,
         createPointShader,
+        createColorShader,
         Point,
       } from "../src/index.ts";
 
@@ -40,9 +41,33 @@
       const points = [
         new Point(-0.5, -0.5, 0),
         new Point(0.5, -0.5, 0),
-        // new Point(0.5, 0.5, 0),
-        // new Point(-0.5, 0.5, 0),
-        // new Point(-0.5, -0.5, 0) // 闭合线条
+        new Point(0.5, 0.5, 0),
+        new Point(-0.5, 0.5, 0),
+        new Point(-0.5, -0.5, 0), // 闭合线条
+      ];
+
+      // 创建颜色数据
+      const colors = [
+        1.0,
+        0.0,
+        0.0,
+        1.0, // 红色
+        0.0,
+        1.0,
+        0.0,
+        1.0, // 绿色
+        0.0,
+        0.0,
+        1.0,
+        1.0, // 蓝色
+        1.0,
+        1.0,
+        0.0,
+        1.0, // 黄色
+        1.0,
+        0.0,
+        1.0,
+        1.0, // 紫色
       ];
 
       // 将点转换为Float32Array
@@ -50,11 +75,14 @@
         points.flatMap((point) => point.toArray()),
       );
 
-      // 创建点着色器（线渲染也可以使用相同的着色器）
-      const shader = createPointShader(renderer.gl);
+      // 创建颜色数组
+      const colorArray = new Float32Array(colors);
+
+      // 创建颜色着色器
+      const shader = createColorShader(renderer.gl);
 
       // 创建线几何体
-      const lineGeometry = new LineGeometry(vertices, shader, 2.0);
+      const lineGeometry = new LineGeometry(vertices, shader, 2.0, colorArray);
 
       // 添加几何体到渲染器
       renderer.addGeometry(lineGeometry);

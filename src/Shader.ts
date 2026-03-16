@@ -1,10 +1,22 @@
 export class Shader {
   public program: WebGLProgram;
 
-  constructor(gl: WebGL2RenderingContext, vertexShaderSource: string, fragmentShaderSource: string) {
-    const vertexShader = this.createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    const fragmentShader = this.createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-    
+  constructor(
+    gl: WebGL2RenderingContext,
+    vertexShaderSource: string,
+    fragmentShaderSource: string,
+  ) {
+    const vertexShader = this.createShader(
+      gl,
+      gl.VERTEX_SHADER,
+      vertexShaderSource,
+    );
+    const fragmentShader = this.createShader(
+      gl,
+      gl.FRAGMENT_SHADER,
+      fragmentShaderSource,
+    );
+
     this.program = gl.createProgram() as WebGLProgram;
     gl.attachShader(this.program, vertexShader);
     gl.attachShader(this.program, fragmentShader);
@@ -19,7 +31,11 @@ export class Shader {
     }
   }
 
-  private createShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader {
+  private createShader(
+    gl: WebGL2RenderingContext,
+    type: number,
+    source: string,
+  ): WebGLShader {
     const shader = gl.createShader(type) as WebGLShader;
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
@@ -41,17 +57,45 @@ export class Shader {
 export function createPointShader(gl: WebGL2RenderingContext): Shader {
   const vertexShaderSource = `
     attribute vec3 aPosition;
+    attribute vec4 aColor;
     uniform float uPointSize;
+    varying vec4 vColor;
     
     void main() {
       gl_Position = vec4(aPosition, 1.0);
       gl_PointSize = uPointSize;
+      vColor = aColor;
     }
   `;
 
   const fragmentShaderSource = `
+    precision mediump float;
+    varying vec4 vColor;
     void main() {
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      gl_FragColor = vColor;
+    }
+  `;
+
+  return new Shader(gl, vertexShaderSource, fragmentShaderSource);
+}
+
+export function createColorShader(gl: WebGL2RenderingContext): Shader {
+  const vertexShaderSource = `
+    attribute vec3 aPosition;
+    attribute vec4 aColor;
+    varying vec4 vColor;
+    
+    void main() {
+      gl_Position = vec4(aPosition, 1.0);
+      vColor = aColor;
+    }
+  `;
+
+  const fragmentShaderSource = `
+    precision mediump float;
+    varying vec4 vColor;
+    void main() {
+      gl_FragColor = vColor;
     }
   `;
 

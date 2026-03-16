@@ -38,12 +38,19 @@
 
       // 创建点数据
       const points = [];
+      const colors = [];
       // 生成100个随机点
       for (let i = 0; i < 100; i++) {
         const x = (Math.random() - 0.5) * 2;
         const y = (Math.random() - 0.5) * 2;
         const z = (Math.random() - 0.5) * 2;
         points.push(new Point(x, y, z));
+        // 生成随机颜色
+        const r = Math.random();
+        const g = Math.random();
+        const b = Math.random();
+        const a = 1.0;
+        colors.push(r, g, b, a);
       }
 
       // 将点转换为Float32Array
@@ -51,11 +58,19 @@
         points.flatMap((point) => point.toArray()),
       );
 
+      // 创建颜色数组
+      const colorArray = new Float32Array(colors);
+
       // 创建点着色器
       const shader = createPointShader(renderer.gl);
 
       // 创建点几何体
-      const pointGeometry = new PointGeometry(vertices, shader, 5.0);
+      const pointGeometry = new PointGeometry(
+        vertices,
+        shader,
+        5.0,
+        colorArray,
+      );
 
       // 添加几何体到渲染器
       renderer.addGeometry(pointGeometry);
