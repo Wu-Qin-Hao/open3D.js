@@ -130,3 +130,174 @@ export class TriangleGeometry extends Geometry {
     gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length / 3);
   }
 }
+
+export class WireframeBoxGeometry extends Geometry {
+  constructor(
+    width: number = 1,
+    height: number = 1,
+    depth: number = 1,
+    shader: Shader,
+  ) {
+    const hw = width / 2;
+    const hh = height / 2;
+    const hd = depth / 2;
+
+    // 定义立方体的 8 个顶点坐标
+    const vertices = new Float32Array([
+      // 前面
+      -hw,
+      -hh,
+      hd,
+      hw,
+      -hh,
+      hd,
+      hw,
+      hh,
+      hd,
+      -hw,
+      hh,
+      hd,
+      // 后面
+      -hw,
+      -hh,
+      -hd,
+      hw,
+      -hh,
+      -hd,
+      hw,
+      hh,
+      -hd,
+      -hw,
+      hh,
+      -hd,
+    ]);
+
+    // 定义线框连接顺序（索引）
+    const indices = new Uint16Array([
+      // 前面
+      0, 1, 1, 2, 2, 3, 3, 0,
+      // 后面
+      4, 5, 5, 6, 6, 7, 7, 4,
+      // 侧面
+      0, 4, 1, 5, 2, 6, 3, 7,
+    ]);
+
+    // 生成线段用的顶点列表
+    const lineVertices = new Float32Array(indices.length * 3);
+    for (let i = 0; i < indices.length; i += 2) {
+      const a = indices[i] * 3;
+      const b = indices[i + 1] * 3;
+
+      lineVertices[i * 3] = vertices[a];
+      lineVertices[i * 3 + 1] = vertices[a + 1];
+      lineVertices[i * 3 + 2] = vertices[a + 2];
+
+      lineVertices[i * 3 + 3] = vertices[b];
+      lineVertices[i * 3 + 4] = vertices[b + 1];
+      lineVertices[i * 3 + 5] = vertices[b + 2];
+    }
+
+    super(lineVertices, shader);
+  }
+
+  protected draw(gl: WebGL2RenderingContext) {
+    gl.drawArrays(gl.LINES, 0, this.vertices.length / 3);
+  }
+}
+
+export class BoxGeometry extends Geometry {
+  constructor(
+    width: number = 1,
+    height: number = 1,
+    depth: number = 1,
+    shader: Shader,
+  ) {
+    const hw = width / 2;
+    const hh = height / 2;
+    const hd = depth / 2;
+
+    // 定义立方体的 8 个顶点坐标
+    const vertices = new Float32Array([
+      // 前面
+      -hw,
+      -hh,
+      hd,
+      hw,
+      -hh,
+      hd,
+      hw,
+      hh,
+      hd,
+      -hw,
+      hh,
+      hd,
+      // 后面
+      -hw,
+      -hh,
+      -hd,
+      hw,
+      -hh,
+      -hd,
+      hw,
+      hh,
+      -hd,
+      -hw,
+      hh,
+      -hd,
+    ]);
+
+    // 定义每个面的三角形索引（正方体由 12 个三角形组成）
+    const indices = new Uint16Array([
+      // 正面
+      0, 1, 2, 2, 3, 0,
+      // 背面
+      4, 7, 6, 6, 5, 4,
+      // 上面
+      3, 2, 6, 6, 7, 3,
+      // 下面
+      0, 4, 5, 5, 1, 0,
+      // 右面
+      1, 5, 6, 6, 2, 1,
+      // 左面
+      0, 3, 7, 7, 4, 0,
+    ]);
+
+    // 根据索引重组为顶点数组（每个三角形 3 个顶点）
+    const triangleVertices = new Float32Array(indices.length * 3);
+    for (let i = 0; i < indices.length; i++) {
+      const a = indices[i] * 3;
+
+      triangleVertices[i * 3] = vertices[a];
+      triangleVertices[i * 3 + 1] = vertices[a + 1];
+      triangleVertices[i * 3 + 2] = vertices[a + 2];
+    }
+
+    // 为每个面定义颜色（RGBA）
+    const colors = new Float32Array([
+      // 正面 - 红色
+      1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+      1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+      // 背面 - 红色
+      1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+      1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+      // 上面 - 红色
+      1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+      1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+      // 下面 - 红色
+      1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+      1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+      // 右面 - 红色
+      1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+      1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+      // 左面 - 红色
+      1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+      1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+    ]);
+
+    super(triangleVertices, shader, colors);
+  }
+
+  protected draw(gl: WebGL2RenderingContext) {
+    gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length / 3);
+  }
+}

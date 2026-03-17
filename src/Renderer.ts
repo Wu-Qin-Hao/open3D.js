@@ -15,6 +15,13 @@ export class Renderer {
     }
     this.camera = new Camera();
     this.camera.setAspect(canvas.width / canvas.height);
+
+    // 启用深度测试
+    this.gl.enable(this.gl.DEPTH_TEST);
+    // 启用背面剔除
+    this.gl.enable(this.gl.CULL_FACE);
+    // 设置剔除模式为剔除背面
+    this.gl.cullFace(this.gl.BACK);
   }
 
   addGeometry(geometry: Geometry) {

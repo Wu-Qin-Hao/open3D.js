@@ -39,6 +39,8 @@
         TriangleGeometry,
         PointGeometry,
         LineGeometry,
+        BoxGeometry,
+        WireframeBoxGeometry,
         createColorShader,
         createPointShader,
         Controls,
@@ -59,74 +61,18 @@
       const colorShader = createColorShader(renderer.gl);
       const pointShader = createPointShader(renderer.gl);
 
-      // 创建一个立方体的顶点
-      const cubeVertices = new Float32Array([
-        // 前面
-        -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
-        // 后面
-        -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0,
-      ]);
+      // 创建彩色立方体
+      const boxGeometry = new BoxGeometry(2, 2, 2, colorShader);
+      renderer.addGeometry(boxGeometry);
 
-      // 创建立方体的颜色
-      const cubeColors = new Float32Array([
-        // 前面 - 红色
-        1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
-        0.0, 1.0,
-        // 后面 - 蓝色
-        1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
-        0.0, 1.0,
-      ]);
-
-      // 创建立方体的面
-      const cubeIndices = new Float32Array([
-        // 前面
-        0, 1, 2, 0, 2, 3,
-        // 右面
-        1, 5, 6, 1, 6, 2,
-        // 后面
-        5, 4, 7, 5, 7, 6,
-        // 左面
-        4, 0, 3, 4, 3, 7,
-        // 顶面
-        3, 2, 6, 3, 6, 7,
-        // 底面
-        4, 5, 1, 4, 1, 0,
-      ]);
-
-      // 创建立方体的每个面
-      for (let i = 0; i < cubeIndices.length; i += 3) {
-        const faceVertices = new Float32Array([
-          cubeVertices[cubeIndices[i] * 3],
-          cubeVertices[cubeIndices[i] * 3 + 1],
-          cubeVertices[cubeIndices[i] * 3 + 2],
-          cubeVertices[cubeIndices[i + 1] * 3],
-          cubeVertices[cubeIndices[i + 1] * 3 + 1],
-          cubeVertices[cubeIndices[i + 1] * 3 + 2],
-          cubeVertices[cubeIndices[i + 2] * 3],
-          cubeVertices[cubeIndices[i + 2] * 3 + 1],
-          cubeVertices[cubeIndices[i + 2] * 3 + 2],
-        ]);
-        const faceColors = new Float32Array([
-          cubeColors[cubeIndices[i] * 4],
-          cubeColors[cubeIndices[i] * 4 + 1],
-          cubeColors[cubeIndices[i] * 4 + 2],
-          cubeColors[cubeIndices[i] * 4 + 3],
-          cubeColors[cubeIndices[i + 1] * 4],
-          cubeColors[cubeIndices[i + 1] * 4 + 1],
-          cubeColors[cubeIndices[i + 1] * 4 + 2],
-          cubeColors[cubeIndices[i + 1] * 4 + 3],
-          cubeColors[cubeIndices[i + 2] * 4],
-          cubeColors[cubeIndices[i + 2] * 4 + 1],
-          cubeColors[cubeIndices[i + 2] * 4 + 2],
-          cubeColors[cubeIndices[i + 2] * 4 + 3],
-        ]);
-        const triangleGeometry = new TriangleGeometry(
-          faceVertices,
-          colorShader,
-          faceColors,
-        );
-        renderer.addGeometry(triangleGeometry);
-      }
+      // 创建线框立方体（可选，用于增强轮廓效果）
+      const wireframeGeometry = new WireframeBoxGeometry(
+        2.05,
+        2.05,
+        2.05,
+        colorShader,
+      );
+      renderer.addGeometry(wireframeGeometry);
 
       // 创建坐标轴
       const axisVertices = new Float32Array([
