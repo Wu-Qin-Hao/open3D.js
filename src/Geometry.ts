@@ -4,14 +4,22 @@ import { Camera } from "./Camera";
 export class Geometry {
   protected vertices: Float32Array;
   protected colors: Float32Array | null = null;
+  protected normals: Float32Array | null = null;
   protected vertexBuffer: WebGLBuffer | null = null;
   protected colorBuffer: WebGLBuffer | null = null;
+  protected normalBuffer: WebGLBuffer | null = null;
   protected shader: Shader;
 
-  constructor(vertices: Float32Array, shader: Shader, colors?: Float32Array) {
+  constructor(
+    vertices: Float32Array,
+    shader: Shader,
+    colors?: Float32Array,
+    normals?: Float32Array,
+  ) {
     this.vertices = vertices;
     this.shader = shader;
     this.colors = colors || null;
+    this.normals = normals || null;
   }
 
   init(gl: WebGL2RenderingContext) {
@@ -26,6 +34,13 @@ export class Geometry {
       gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
     }
+
+    // 初始化法线缓冲区
+    if (this.normals) {
+      this.normalBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
+    }
   }
 
   render(gl: WebGL2RenderingContext, camera: Camera) {
@@ -38,6 +53,43 @@ export class Geometry {
     // 传递MVP矩阵
     const mvpLocation = gl.getUniformLocation(this.shader.program, "uMVP");
     gl.uniformMatrix4fv(mvpLocation, false, camera.getMVPMatrix());
+
+    // 传递模型矩阵
+    const modelLocation = gl.getUniformLocation(this.shader.program, "uModel");
+    if (modelLocation) {
+      gl.uniformMatrix4fv(
+        modelLocation,
+        false,
+        new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]),
+      );
+    }
+
+    // 传递光照位置
+    const lightPositionLocation = gl.getUniformLocation(
+      this.shader.program,
+      "uLightPosition",
+    );
+    if (lightPositionLocation) {
+      gl.uniform3f(lightPositionLocation, 5.0, 5.0, 5.0);
+    }
+
+    // 传递观察位置
+    const viewPositionLocation = gl.getUniformLocation(
+      this.shader.program,
+      "uViewPosition",
+    );
+    if (viewPositionLocation) {
+      gl.uniform3f(viewPositionLocation, 0.0, 0.0, 5.0);
+    }
+
+    // 传递 shininess
+    const shininessLocation = gl.getUniformLocation(
+      this.shader.program,
+      "uShininess",
+    );
+    if (shininessLocation) {
+      gl.uniform1f(shininessLocation, 32.0);
+    }
 
     // 绑定顶点缓冲区
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -54,6 +106,17 @@ export class Geometry {
       const colorLocation = gl.getAttribLocation(this.shader.program, "aColor");
       gl.enableVertexAttribArray(colorLocation);
       gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
+    }
+
+    // 绑定法线缓冲区
+    if (this.normals && this.normalBuffer) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+      const normalLocation = gl.getAttribLocation(
+        this.shader.program,
+        "aNormal",
+      );
+      gl.enableVertexAttribArray(normalLocation);
+      gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
     }
 
     this.draw(gl);
@@ -294,7 +357,29 @@ export class BoxGeometry extends Geometry {
       1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
     ]);
 
-    super(triangleVertices, shader, colors);
+    // 为每个面定义法线
+    const normals = new Float32Array([
+      // 正面 - 法线方向：z轴正方向
+      0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+      0.0, 0.0, 1.0,
+      // 背面 - 法线方向：z轴负方向
+      0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0,
+      -1.0, 0.0, 0.0, -1.0,
+      // 上面 - 法线方向：y轴正方向
+      0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+      0.0, 1.0, 0.0,
+      // 下面 - 法线方向：y轴负方向
+      0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0,
+      0.0, 0.0, -1.0, 0.0,
+      // 右面 - 法线方向：x轴正方向
+      1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+      1.0, 0.0, 0.0,
+      // 左面 - 法线方向：x轴负方向
+      -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0,
+      0.0, -1.0, 0.0, 0.0,
+    ]);
+
+    super(triangleVertices, shader, colors, normals);
   }
 
   protected draw(gl: WebGL2RenderingContext) {

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Lighting Example</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+      .info {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="info">
+      <p>Drag to rotate</p>
+      <p>Scroll to zoom</p>
+      <p>Lighting enabled</p>
+    </div>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+      import {
+        Renderer,
+        BoxGeometry,
+        LineGeometry,
+        createColorShader,
+        createPhongShader,
+        Controls,
+      } from "../src/index.ts";
+
+      // 创建画布
+      const canvas = document.getElementById("canvas");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // 创建渲染器
+      const renderer = new Renderer(canvas);
+
+      // 创建相机控制器
+      const controls = new Controls(renderer.getCamera(), canvas);
+
+      // 创建着色器
+      const colorShader = createColorShader(renderer.gl);
+      const phongShader = createPhongShader(renderer.gl);
+
+      // 创建彩色立方体（带光照效果）
+      const boxGeometry = new BoxGeometry(2, 2, 2, phongShader);
+      renderer.addGeometry(boxGeometry);
+
+      // 创建坐标轴
+      const axisVertices = new Float32Array([
+        // X轴 (红色)
+        -3.0, 0.0, 0.0, 3.0, 0.0, 0.0,
+        // Y轴 (绿色)
+        0.0, -3.0, 0.0, 0.0, 3.0, 0.0,
+        // Z轴 (蓝色)
+        0.0, 0.0, -3.0, 0.0, 0.0, 3.0,
+      ]);
+
+      const axisColors = new Float32Array([
+        // X轴 (红色)
+        1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+        // Y轴 (绿色)
+        0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0,
+        // Z轴 (蓝色)
+        0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0,
+      ]);
+
+      // X轴
+      const xAxisGeometry = new LineGeometry(
+        new Float32Array([
+          axisVertices[0],
+          axisVertices[1],
+          axisVertices[2],
+          axisVertices[3],
+          axisVertices[4],
+          axisVertices[5],
+        ]),
+        colorShader,
+        2.0,
+        new Float32Array([
+          axisColors[0],
+          axisColors[1],
+          axisColors[2],
+          axisColors[3],
+          axisColors[4],
+          axisColors[5],
+          axisColors[6],
+          axisColors[7],
+        ]),
+      );
+      renderer.addGeometry(xAxisGeometry);
+
+      // Y轴
+      const yAxisGeometry = new LineGeometry(
+        new Float32Array([
+          axisVertices[6],
+          axisVertices[7],
+          axisVertices[8],
+          axisVertices[9],
+          axisVertices[10],
+          axisVertices[11],
+        ]),
+        colorShader,
+        2.0,
+        new Float32Array([
+          axisColors[8],
+          axisColors[9],
+          axisColors[10],
+          axisColors[11],
+          axisColors[12],
+          axisColors[13],
+          axisColors[14],
+          axisColors[15],
+        ]),
+      );
+      renderer.addGeometry(yAxisGeometry);
+
+      // Z轴
+      const zAxisGeometry = new LineGeometry(
+        new Float32Array([
+          axisVertices[12],
+          axisVertices[13],
+          axisVertices[14],
+          axisVertices[15],
+          axisVertices[16],
+          axisVertices[17],
+        ]),
+        colorShader,
+        2.0,
+        new Float32Array([
+          axisColors[16],
+          axisColors[17],
+          axisColors[18],
+          axisColors[19],
+          axisColors[20],
+          axisColors[21],
+          axisColors[22],
+          axisColors[23],
+        ]),
+      );
+      renderer.addGeometry(zAxisGeometry);
+
+      // 动画循环
+      function animate() {
+        renderer.render();
+        requestAnimationFrame(animate);
+      }
+
+      // 窗口大小变化处理
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // 开始动画
+      animate();
+    </script>
+  </body>
+</html>
