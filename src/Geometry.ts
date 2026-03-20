@@ -1,7 +1,7 @@
 import { Shader } from "./Shader";
 import { Camera } from "./Camera";
 
-export class Geometry {
+class Geometry {
   protected vertices: Float32Array;
   protected colors: Float32Array | null = null;
   protected normals: Float32Array | null = null;
@@ -127,7 +127,7 @@ export class Geometry {
   }
 }
 
-export class PointGeometry extends Geometry {
+class PointGeometry extends Geometry {
   private pointSize: number;
 
   constructor(
@@ -157,7 +157,7 @@ export class PointGeometry extends Geometry {
   }
 }
 
-export class LineGeometry extends Geometry {
+class LineGeometry extends Geometry {
   private lineWidth: number;
 
   constructor(
@@ -184,7 +184,7 @@ export class LineGeometry extends Geometry {
   }
 }
 
-export class TriangleGeometry extends Geometry {
+class TriangleGeometry extends Geometry {
   constructor(vertices: Float32Array, shader: Shader, colors?: Float32Array) {
     super(vertices, shader, colors);
   }
@@ -194,7 +194,7 @@ export class TriangleGeometry extends Geometry {
   }
 }
 
-export class WireframeBoxGeometry extends Geometry {
+class WireframeBoxGeometry extends Geometry {
   constructor(
     width: number = 1,
     height: number = 1,
@@ -268,7 +268,7 @@ export class WireframeBoxGeometry extends Geometry {
   }
 }
 
-export class BoxGeometry extends Geometry {
+class BoxGeometry extends Geometry {
   constructor(
     width: number = 1,
     height: number = 1,
@@ -386,3 +386,12 @@ export class BoxGeometry extends Geometry {
     gl.drawArrays(gl.TRIANGLES, 0, this.vertices.length / 3);
   }
 }
+
+export {
+  Geometry,
+  PointGeometry,
+  LineGeometry,
+  TriangleGeometry,
+  WireframeBoxGeometry,
+  BoxGeometry,
+};

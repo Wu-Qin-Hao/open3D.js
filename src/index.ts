@@ -1,6 +1,16 @@
-export * from "./Renderer";
-export * from "./Point";
-export * from "./Geometry";
-export * from "./Shader";
-export * from "./Camera";
-export * from "./Controls";
+export { Renderer } from "./Renderer";
+export {
+  createColorShader,
+  createPointShader,
+  createPhongShader,
+} from "./Shader";
+export {
+  PointGeometry,
+  LineGeometry,
+  TriangleGeometry,
+  WireframeBoxGeometry,
+  BoxGeometry,
+} from "./Geometry";
+export { Point } from "./Point";
+export { Camera } from "./Camera";
+export { Controls } from "./Controls";

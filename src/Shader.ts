@@ -1,4 +1,4 @@
-export class Shader {
+class Shader {
   public program: WebGLProgram;
 
   constructor(
@@ -54,7 +54,7 @@ export class Shader {
   }
 }
 
-export function createPointShader(gl: WebGL2RenderingContext): Shader {
+function createPointShader(gl: WebGL2RenderingContext): Shader {
   const vertexShaderSource = `
     attribute vec3 aPosition;
     attribute vec4 aColor;
@@ -80,7 +80,7 @@ export function createPointShader(gl: WebGL2RenderingContext): Shader {
   return new Shader(gl, vertexShaderSource, fragmentShaderSource);
 }
 
-export function createColorShader(gl: WebGL2RenderingContext): Shader {
+function createColorShader(gl: WebGL2RenderingContext): Shader {
   const vertexShaderSource = `
     attribute vec3 aPosition;
     attribute vec4 aColor;
@@ -104,7 +104,7 @@ export function createColorShader(gl: WebGL2RenderingContext): Shader {
   return new Shader(gl, vertexShaderSource, fragmentShaderSource);
 }
 
-export function createPhongShader(gl: WebGL2RenderingContext): Shader {
+function createPhongShader(gl: WebGL2RenderingContext): Shader {
   const vertexShaderSource = `#version 300 es
     in vec3 aPosition;
     in vec3 aNormal;
@@ -160,3 +160,5 @@ export function createPhongShader(gl: WebGL2RenderingContext): Shader {
 
   return new Shader(gl, vertexShaderSource, fragmentShaderSource);
 }
+
+export { Shader, createPointShader, createColorShader, createPhongShader };

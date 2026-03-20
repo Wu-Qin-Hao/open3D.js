@@ -1,7 +1,7 @@
 import { Geometry } from "./Geometry";
 import { Camera } from "./Camera";
 
-export class Renderer {
+class Renderer {
   private canvas: HTMLCanvasElement;
   private gl: WebGL2RenderingContext;
   private geometries: Geometry[] = [];
@@ -49,3 +49,5 @@ export class Renderer {
     return this.camera;
   }
 }
+
+export { Renderer };

@@ -1,5 +1,9 @@
-export class Point {
-  constructor(public x: number, public y: number, public z: number) {}
+class Point {
+  constructor(
+    public x: number,
+    public y: number,
+    public z: number,
+  ) {}
 
   toArray(): number[] {
     return [this.x, this.y, this.z];
@@ -9,3 +13,5 @@ export class Point {
     return new Point(array[0], array[1], array[2]);
   }
 }
+
+export { Point };
