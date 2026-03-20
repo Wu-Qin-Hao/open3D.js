@@ -42,7 +42,6 @@
         BoxGeometry,
         WireframeBoxGeometry,
         createColorShader,
-        createPointShader,
         Controls,
       } from "../src/index.ts";
 
@@ -59,7 +58,6 @@
 
       // 创建着色器
       const colorShader = createColorShader(renderer.gl);
-      const pointShader = createPointShader(renderer.gl);
 
       // 创建彩色立方体
       const boxGeometry = new BoxGeometry(2, 2, 2, colorShader);
