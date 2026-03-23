@@ -1,4 +1,4 @@
-import { Camera } from "./Camera";
+import { Camera } from "../cameras/Camera";
 
 class Controls {
   private camera: Camera;

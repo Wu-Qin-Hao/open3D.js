@@ -1,5 +1,5 @@
-import { Geometry } from "./Geometry";
-import { Camera } from "./Camera";
+import { Geometry } from "../geometries/Geometry";
+import { Camera } from "../cameras/Camera";
 
 class Renderer {
   private canvas: HTMLCanvasElement;

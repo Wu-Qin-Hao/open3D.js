@@ -40,7 +40,6 @@
         PointGeometry,
         LineGeometry,
         BoxGeometry,
-        WireframeBoxGeometry,
         createColorShader,
         Controls,
       } from "../src/index.ts";
@@ -62,15 +61,6 @@
       // 创建彩色立方体
       const boxGeometry = new BoxGeometry(2, 2, 2, colorShader);
       renderer.addGeometry(boxGeometry);
-
-      // 创建线框立方体（可选，用于增强轮廓效果）
-      const wireframeGeometry = new WireframeBoxGeometry(
-        2.05,
-        2.05,
-        2.05,
-        colorShader,
-      );
-      renderer.addGeometry(wireframeGeometry);
 
       // 创建坐标轴
       const axisVertices = new Float32Array([
