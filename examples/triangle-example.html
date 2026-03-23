@@ -22,7 +22,6 @@
         Renderer,
         TriangleGeometry,
         createColorShader,
-        Point,
       } from "../src/index.ts";
 
       // 获取canvas元素
@@ -38,9 +37,9 @@
 
       // 创建三角形数据
       const points = [
-        new Point(0, 0.5, 0), // 顶点1
-        new Point(-0.5, -0.5, 0), // 顶点2
-        new Point(0.5, -0.5, 0), // 顶点3
+        [0, 0.5, 0], // 顶点1
+        [-0.5, -0.5, 0], // 顶点2
+        [0.5, -0.5, 0], // 顶点3
       ];
 
       // 创建颜色数据
@@ -60,9 +59,7 @@
       ];
 
       // 将点转换为Float32Array
-      const vertices = new Float32Array(
-        points.flatMap((point) => point.toArray()),
-      );
+      const vertices = new Float32Array(points.flat());
 
       // 创建颜色数组
       const colorArray = new Float32Array(colors);

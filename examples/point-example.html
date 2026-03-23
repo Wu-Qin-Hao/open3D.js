@@ -22,7 +22,6 @@
         Renderer,
         PointGeometry,
         createPointShader,
-        Point,
       } from "../src/index.ts";
 
       // 获取canvas元素
@@ -44,7 +43,7 @@
         const x = (Math.random() - 0.5) * 2;
         const y = (Math.random() - 0.5) * 2;
         const z = (Math.random() - 0.5) * 2;
-        points.push(new Point(x, y, z));
+        points.push([x, y, z]);
         // 生成随机颜色
         const r = Math.random();
         const g = Math.random();
@@ -54,9 +53,7 @@
       }
 
       // 将点转换为Float32Array
-      const vertices = new Float32Array(
-        points.flatMap((point) => point.toArray()),
-      );
+      const vertices = new Float32Array(points.flat());
 
       // 创建颜色数组
       const colorArray = new Float32Array(colors);

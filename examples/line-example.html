@@ -22,7 +22,6 @@
         Renderer,
         LineGeometry,
         createColorShader,
-        Point,
       } from "../src/index.ts";
 
       // 获取canvas元素
@@ -38,11 +37,11 @@
 
       // 创建线数据 - 矩形
       const points = [
-        new Point(-0.5, -0.5, 0),
-        new Point(0.5, -0.5, 0),
-        new Point(0.5, 0.5, 0),
-        new Point(-0.5, 0.5, 0),
-        new Point(-0.5, -0.5, 0), // 闭合线条
+        [-0.5, -0.5, 0],
+        [0.5, -0.5, 0],
+        [0.5, 0.5, 0],
+        [-0.5, 0.5, 0],
+        [-0.5, -0.5, 0], // 闭合线条
       ];
 
       // 创建颜色数据
@@ -70,9 +69,7 @@
       ];
 
       // 将点转换为Float32Array
-      const vertices = new Float32Array(
-        points.flatMap((point) => point.toArray()),
-      );
+      const vertices = new Float32Array(points.flat());
 
       // 创建颜色数组
       const colorArray = new Float32Array(colors);
