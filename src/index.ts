@@ -1,9 +1,7 @@
 export { Renderer } from "./core/Renderer";
-export {
-  createColorShader,
-  createPointShader,
-  createPhongShader,
-} from "./core/Shader";
+export { createPointShader } from "./createShaders/createPointShader";
+export { createColorShader } from "./createShaders/createColorShader";
+export { createPhongShader } from "./createShaders/createPhongShader";
 export { PointGeometry } from "./geometries/PointGeometry";
 export { LineGeometry } from "./geometries/LineGeometry";
 export { TriangleGeometry } from "./geometries/TriangleGeometry";
