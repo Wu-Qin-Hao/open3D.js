@@ -5,14 +5,9 @@ import { Camera } from "../cameras/Camera";
 class PointGeometry extends Geometry {
   private pointSize: number;
 
-  constructor(
-    vertices: Float32Array,
-    shader: Shader,
-    pointSize: number = 5.0,
-    colors?: Float32Array,
-  ) {
+  constructor(vertices: Float32Array, shader: Shader, colors?: Float32Array) {
     super(vertices, shader, colors);
-    this.pointSize = pointSize;
+    this.pointSize = 5.0;
   }
 
   render(gl: WebGL2RenderingContext, camera: Camera) {
