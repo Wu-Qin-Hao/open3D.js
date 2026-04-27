@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Point Rendering Example</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #000;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+  </body>
+
+  <script>
+    // 获取canvas元素
+    const canvas = document.getElementById("canvas");
+    // 设置canvas尺寸
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // 获取WebGL上下文
+    const gl = canvas.getContext("webgl2");
+    // 设置视口大小
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    // 创建点数据 - 生成一个3D点云
+    function generatePointCloud() {
+      const points = [];
+      const colors = [];
+      const sizes = [];
+
+      // 生成随机点
+      for (let i = 0; i < 100; i++) {
+        // 随机坐标 (-2 到 2)
+        const x = (Math.random() - 0.5) * 4;
+        const y = (Math.random() - 0.5) * 4;
+        const z = (Math.random() - 0.5) * 4;
+        points.push(x, y, z);
+
+        // 随机颜色
+        const r = Math.random();
+        const g = Math.random();
+        const b = Math.random();
+        colors.push(r, g, b, 1.0);
+
+        // 随机大小 (5 到 20)
+        const size = Math.random() * 15 + 5;
+        sizes.push(size);
+      }
+
+      // 添加一些固定点以形成结构
+      for (let i = -2; i <= 2; i += 0.5) {
+        points.push(i, 0, 0);
+        colors.push(1.0, 0, 0, 1.0);
+        sizes.push(10);
+
+        points.push(0, i, 0);
+        colors.push(0, 1.0, 0, 1.0);
+        sizes.push(10);
+
+        points.push(0, 0, i);
+        colors.push(0, 0, 1.0, 1.0);
+        sizes.push(10);
+      }
+
+      return {
+        points: new Float32Array(points),
+        colors: new Float32Array(colors),
+        sizes: new Float32Array(sizes),
+      };
+    }
+
+    // 生成点云数据
+    const pointCloud = generatePointCloud();
+    let pointData = pointCloud.points;
+    let colorData = pointCloud.colors;
+    let pointSizeData = pointCloud.sizes;
+
+    // ------------------------------------------着色器运行固定流水线----------------------------------------
+    // 编写顶点着色器源码
+    const vertexShaderSource = `
+      attribute vec3 aPosition;
+      attribute vec4 aColor;
+      attribute float aPointSize;
+      uniform mat4 uModelMatrix;
+      uniform mat4 uViewMatrix;
+      uniform mat4 uProjectionMatrix;
+      varying vec4 vColor;
+      void main() {
+        gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0); // 设置坐标
+        gl_PointSize = aPointSize; // 设置尺寸
+        vColor = aColor; // 设置颜色
+      }
+    `;
+    // 编写片段着色器源码
+    const fragmentShaderSource = `
+      precision mediump float;
+      varying vec4 vColor;
+      void main() {
+        gl_FragColor = vColor; // 设置颜色
+      }
+    `;
+
+    // 顶点着色器类型
+    const vsType = gl.VERTEX_SHADER;
+    // 1.创建顶点着色器对象
+    const vsShader = gl.createShader(vsType);
+    // 2.设置顶点着色器源代码
+    gl.shaderSource(vsShader, vertexShaderSource);
+    // 3.编译顶点着色器
+    gl.compileShader(vsShader);
+
+    // 片元着色器类型
+    const fsType = gl.FRAGMENT_SHADER;
+    // 1.创建片段着色器对象
+    const fsShader = gl.createShader(fsType);
+    // 2.设置片段着色器源代码
+    gl.shaderSource(fsShader, fragmentShaderSource);
+    // 3.编译片段着色器
+    gl.compileShader(fsShader);
+
+    // 4.创建WebGL程序对象
+    const program = gl.createProgram();
+    // 5.将顶点着色器附加到程序
+    gl.attachShader(program, vsShader);
+    // 6.将片段着色器附加到程序
+    gl.attachShader(program, fsShader);
+    // 7.链接程序
+    gl.linkProgram(program);
+    // 8.使用程序
+    gl.useProgram(program);
+    // ------------------------------------------着色器运行固定流水线----------------------------------------
+
+    // ---------------------------------------传递数据到着色器固定流水线--------------------------------------
+    // 初始化顶点缓冲区
+    const vertexBuffer = gl.createBuffer();
+    // 绑定顶点缓冲区
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    // 将顶点数据上传到GPU
+    gl.bufferData(gl.ARRAY_BUFFER, pointData, gl.STATIC_DRAW);
+    // 获取顶点着色器属性位置
+    const positionLocation = gl.getAttribLocation(program, "aPosition");
+    // 启用顶点着色器属性
+    gl.enableVertexAttribArray(positionLocation);
+    // 设置顶点着色器属性指针
+    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+    // 颜色缓冲区
+    const colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colorData, gl.STATIC_DRAW);
+    const colorLocation = gl.getAttribLocation(program, "aColor");
+    gl.enableVertexAttribArray(colorLocation);
+    gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
+
+    // 点大小缓冲区
+    const pointSizeBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, pointSizeBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, pointSizeData, gl.STATIC_DRAW);
+    const pointSizeLocation = gl.getAttribLocation(program, "aPointSize");
+    gl.enableVertexAttribArray(pointSizeLocation);
+    gl.vertexAttribPointer(pointSizeLocation, 1, gl.FLOAT, false, 0, 0);
+    // ---------------------------------------传递数据到着色器固定流水线--------------------------------------
+
+    // 相机参数
+    let cameraPosition = [0, 0, 5];
+    let cameraTarget = [0, 0, 0];
+    let cameraUp = [0, 1, 0];
+
+    // 矩阵变量
+    let modelMatrix = createIdentityMatrix();
+    let viewMatrix = createIdentityMatrix();
+    let projectionMatrix = createPerspectiveMatrix(
+      Math.PI * 0.5,
+      canvas.width / canvas.height,
+      0.1,
+      100.0,
+    );
+
+    // 旋转参数
+    let rotationX = 0;
+    let rotationY = 0;
+    let rotationZ = 0;
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    // 获取uniform变量位置
+    const modelMatrixLocation = gl.getUniformLocation(program, "uModelMatrix");
+    const viewMatrixLocation = gl.getUniformLocation(program, "uViewMatrix");
+    const projectionMatrixLocation = gl.getUniformLocation(
+      program,
+      "uProjectionMatrix",
+    );
+
+    // 绘制点
+    function drawPoints() {
+      const pointCount = pointData.length / 3;
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      // 更新旋转
+      if (!isDragging) {
+        rotationX += 0.005;
+        rotationY += 0.008;
+        rotationZ += 0.003;
+      }
+
+      // 更新模型矩阵
+      modelMatrix = createRotationMatrix(rotationX, rotationY, rotationZ);
+
+      // 设置矩阵
+      gl.uniformMatrix4fv(modelMatrixLocation, false, modelMatrix);
+      gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix);
+      gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
+
+      gl.drawArrays(gl.POINT, 0, pointCount);
+
+      // 动画循环
+      requestAnimationFrame(drawPoints);
+    }
+
+    // 初始绘制
+    updateViewMatrix();
+    drawPoints();
+
+    // 矩阵工具函数
+    function createIdentityMatrix() {
+      return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+    }
+
+    function createRotationMatrix(angleX, angleY, angleZ) {
+      const cosX = Math.cos(angleX);
+      const sinX = Math.sin(angleX);
+      const cosY = Math.cos(angleY);
+      const sinY = Math.sin(angleY);
+      const cosZ = Math.cos(angleZ);
+      const sinZ = Math.sin(angleZ);
+
+      const rotationX = new Float32Array([
+        1,
+        0,
+        0,
+        0,
+        0,
+        cosX,
+        -sinX,
+        0,
+        0,
+        sinX,
+        cosX,
+        0,
+        0,
+        0,
+        0,
+        1,
+      ]);
+
+      const rotationY = new Float32Array([
+        cosY,
+        0,
+        sinY,
+        0,
+        0,
+        1,
+        0,
+        0,
+        -sinY,
+        0,
+        cosY,
+        0,
+        0,
+        0,
+        0,
+        1,
+      ]);
+
+      const rotationZ = new Float32Array([
+        cosZ,
+        -sinZ,
+        0,
+        0,
+        sinZ,
+        cosZ,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+      ]);
+
+      return multiplyMatrices(
+        multiplyMatrices(rotationZ, rotationY),
+        rotationX,
+      );
+    }
+
+    function createTranslationMatrix(x, y, z) {
+      return new Float32Array([1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1]);
+    }
+
+    function createPerspectiveMatrix(fov, aspect, near, far) {
+      const f = 1.0 / Math.tan(fov * 0.5);
+      const rangeInv = 1.0 / (near - far);
+
+      return new Float32Array([
+        f / aspect,
+        0,
+        0,
+        0,
+        0,
+        f,
+        0,
+        0,
+        0,
+        0,
+        (near + far) * rangeInv,
+        -1,
+        0,
+        0,
+        near * far * rangeInv * 2,
+        0,
+      ]);
+    }
+
+    function multiplyMatrices(a, b) {
+      const result = new Float32Array(16);
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          result[i * 4 + j] =
+            a[i * 4 + 0] * b[0 * 4 + j] +
+            a[i * 4 + 1] * b[1 * 4 + j] +
+            a[i * 4 + 2] * b[2 * 4 + j] +
+            a[i * 4 + 3] * b[3 * 4 + j];
+        }
+      }
+      return result;
+    }
+
+    // 更新视图矩阵
+    function updateViewMatrix() {
+      const [eyeX, eyeY, eyeZ] = cameraPosition;
+      const [centerX, centerY, centerZ] = cameraTarget;
+      const [upX, upY, upZ] = cameraUp;
+
+      const zAxis = [eyeX - centerX, eyeY - centerY, eyeZ - centerZ];
+      const zLength = Math.sqrt(
+        zAxis[0] * zAxis[0] + zAxis[1] * zAxis[1] + zAxis[2] * zAxis[2],
+      );
+      const normalizedZ = [
+        zAxis[0] / zLength,
+        zAxis[1] / zLength,
+        zAxis[2] / zLength,
+      ];
+
+      const xAxis = [
+        upY * normalizedZ[2] - upZ * normalizedZ[1],
+        upZ * normalizedZ[0] - upX * normalizedZ[2],
+        upX * normalizedZ[1] - upY * normalizedZ[0],
+      ];
+      const xLength = Math.sqrt(
+        xAxis[0] * xAxis[0] + xAxis[1] * xAxis[1] + xAxis[2] * xAxis[2],
+      );
+      const normalizedX = [
+        xAxis[0] / xLength,
+        xAxis[1] / xLength,
+        xAxis[2] / xLength,
+      ];
+
+      const yAxis = [
+        normalizedZ[1] * normalizedX[2] - normalizedZ[2] * normalizedX[1],
+        normalizedZ[2] * normalizedX[0] - normalizedZ[0] * normalizedX[2],
+        normalizedZ[0] * normalizedX[1] - normalizedZ[1] * normalizedX[0],
+      ];
+
+      viewMatrix = new Float32Array([
+        normalizedX[0],
+        yAxis[0],
+        normalizedZ[0],
+        0,
+        normalizedX[1],
+        yAxis[1],
+        normalizedZ[1],
+        0,
+        normalizedX[2],
+        yAxis[2],
+        normalizedZ[2],
+        0,
+        -(
+          normalizedX[0] * eyeX +
+          normalizedX[1] * eyeY +
+          normalizedX[2] * eyeZ
+        ),
+        -(yAxis[0] * eyeX + yAxis[1] * eyeY + yAxis[2] * eyeZ),
+        -(
+          normalizedZ[0] * eyeX +
+          normalizedZ[1] * eyeY +
+          normalizedZ[2] * eyeZ
+        ),
+        1,
+      ]);
+    }
+
+    // 窗口大小调整处理
+    function handleResize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      projectionMatrix = createPerspectiveMatrix(
+        Math.PI * 0.5,
+        canvas.width / canvas.height,
+        0.1,
+        100.0,
+      );
+    }
+
+    window.addEventListener("resize", handleResize);
+
+    // 鼠标事件处理
+    canvas.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - lastMouseX;
+        const deltaY = e.clientY - lastMouseY;
+
+        rotationY += deltaX * 0.01;
+        rotationX += deltaY * 0.01;
+
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+      }
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+
+    // 将平面化的点渲染修改为具有空间感和可转动的3D效果。以下是具体的改进：
+
+    // 1. 添加了3D空间变换 ：
+
+    //    - 修改了顶点着色器，添加了模型视图投影矩阵(MVP)
+    //    - 实现了完整的矩阵数学库，包括旋转、平移和透视投影矩阵
+
+    // 2. 实现了相机系统 ：
+
+    //    - 创建了视图矩阵和投影矩阵
+    //    - 设置了合理的相机位置和参数
+
+    // 3. 添加了动画和交互 ：
+
+    //    - 实现了自动旋转动画
+    //    - 添加了鼠标拖拽控制，支持用户手动旋转视角
+    //    - 拖拽时自动停止自动旋转，提升交互体验
+
+    // 4. 增强了空间感 ：
+
+    //    - 生成了100个随机分布的3D点
+    //    - 添加了坐标轴固定点，形成参考结构
+    //    - 为不同点设置了随机颜色和大小
+
+    // 5. 优化了用户体验 ：
+
+    //    - 添加了窗口大小调整处理
+    //    - 确保渲染性能流畅
+    //    - 提供了直观的交互方式
+  </script>
+</html>

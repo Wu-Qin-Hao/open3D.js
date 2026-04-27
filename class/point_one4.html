@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Point Rendering Example</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #000;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+  </body>
+
+  <script>
+    // 获取canvas元素
+    const canvas = document.getElementById("canvas");
+    // 设置canvas尺寸
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // 获取WebGL上下文
+    const gl = canvas.getContext("webgl2");
+    // 设置视口大小
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    // 创建点数据(0.5, 0.0, 0.0 是点的坐标)
+    const pointData = new Float32Array([0.5, 0.0, 0.0, 0.0, 0.5, 0.0]);
+    // 创建颜色数据(0.0, 1.0, 0.0, 1.0 是绿色)
+    const colorData = new Float32Array([
+      0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+    ]);
+    // 设置点大小
+    const pointSize = 40.0;
+
+    // ------------------------------------------着色器运行固定流水线----------------------------------------
+    // 编写顶点着色器源码
+    const vertexShaderSource = `
+      attribute vec3 aPosition;
+      attribute vec4 aColor;
+      uniform float uPointSize;
+      varying vec4 vColor;
+      void main() {
+        gl_Position = vec4(aPosition, 1.0); // 设置坐标
+        gl_PointSize = uPointSize; // 设置尺寸
+        vColor = aColor; // 设置颜色
+      }
+    `;
+    // 编写片段着色器源码
+    const fragmentShaderSource = `
+      precision mediump float;
+      varying vec4 vColor;
+      void main() {
+        gl_FragColor = vColor; // 设置颜色
+      }
+    `;
+
+    // 顶点着色器类型
+    const vsType = gl.VERTEX_SHADER;
+    // 1.创建顶点着色器对象
+    const vsShader = gl.createShader(vsType);
+    // 2.设置顶点着色器源代码
+    gl.shaderSource(vsShader, vertexShaderSource);
+    // 3.编译顶点着色器
+    gl.compileShader(vsShader);
+
+    // 片元着色器类型
+    const fsType = gl.FRAGMENT_SHADER;
+    // 1.创建片段着色器对象
+    const fsShader = gl.createShader(fsType);
+    // 2.设置片段着色器源代码
+    gl.shaderSource(fsShader, fragmentShaderSource);
+    // 3.编译片段着色器
+    gl.compileShader(fsShader);
+
+    // 4.创建WebGL程序对象
+    const program = gl.createProgram();
+    // 5.将顶点着色器附加到程序
+    gl.attachShader(program, vsShader);
+    // 6.将片段着色器附加到程序
+    gl.attachShader(program, fsShader);
+    // 7.链接程序
+    gl.linkProgram(program);
+    // 8.使用程序
+    gl.useProgram(program);
+    // ------------------------------------------着色器运行固定流水线----------------------------------------
+
+    // ---------------------------------------传递数据到着色器固定流水线--------------------------------------
+    // 初始化顶点缓冲区
+    const vertexBuffer = gl.createBuffer();
+    // 绑定顶点缓冲区
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    // 将顶点数据上传到GPU
+    gl.bufferData(gl.ARRAY_BUFFER, pointData, gl.STATIC_DRAW);
+    // 获取顶点着色器属性位置
+    const positionLocation = gl.getAttribLocation(program, "aPosition");
+    // 启用顶点着色器属性
+    gl.enableVertexAttribArray(positionLocation);
+    // 设置顶点着色器属性指针
+    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+    // 颜色缓冲区
+    const colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colorData, gl.STATIC_DRAW);
+    const colorLocation = gl.getAttribLocation(program, "aColor");
+    gl.enableVertexAttribArray(colorLocation);
+    gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
+
+    // 获取uniform变量位置
+    const pointSizeLocation = gl.getUniformLocation(program, "uPointSize");
+    // 将 JavaScript 中的值传递给 GPU
+    gl.uniform1f(pointSizeLocation, pointSize);
+    // ---------------------------------------传递数据到着色器固定流水线--------------------------------------
+
+    // 绘制点
+    const pointCount = pointData.length / 3;
+    gl.drawArrays(gl.POINT, 0, pointCount);
+  </script>
+</html>
