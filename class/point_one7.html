@@ -19,6 +19,8 @@
     <canvas id="canvas"></canvas>
   </body>
 
+  <script src="point_one7(m4).js"></script>
+
   <script>
     // 获取canvas元素
     const canvas = document.getElementById("canvas");
@@ -170,11 +172,6 @@
     gl.vertexAttribPointer(pointSizeLocation, 1, gl.FLOAT, false, 0, 0);
     // ---------------------------------------传递数据到着色器固定流水线--------------------------------------
 
-    // 相机参数
-    let cameraPosition = [0, 0, 5];
-    let cameraTarget = [0, 0, 0];
-    let cameraUp = [0, 1, 0];
-
     // 矩阵变量
     let modelMatrix = createIdentityMatrix();
     let viewMatrix = createIdentityMatrix();
@@ -185,14 +182,6 @@
       100.0,
     );
 
-    // 旋转参数
-    let rotationX = 0;
-    let rotationY = 0;
-    let rotationZ = 0;
-    let isDragging = false;
-    let lastMouseX = 0;
-    let lastMouseY = 0;
-
     // 获取uniform变量位置
     const modelMatrixLocation = gl.getUniformLocation(program, "uModelMatrix");
     const viewMatrixLocation = gl.getUniformLocation(program, "uViewMatrix");
@@ -201,156 +190,16 @@
       "uProjectionMatrix",
     );
 
-    // 绘制点
-    function drawPoints() {
-      const pointCount = pointData.length / 3;
-      gl.clear(gl.COLOR_BUFFER_BIT);
-
-      // 更新旋转
-      if (!isDragging) {
-        rotationX += 0.005;
-        rotationY += 0.008;
-        rotationZ += 0.003;
-      }
-
-      // 更新模型矩阵
-      modelMatrix = createRotationMatrix(rotationX, rotationY, rotationZ);
-
-      // 设置矩阵
-      gl.uniformMatrix4fv(modelMatrixLocation, false, modelMatrix);
-      gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix);
-      gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
-
-      gl.drawArrays(gl.POINT, 0, pointCount);
-
-      // 动画循环
-      requestAnimationFrame(drawPoints);
-    }
-
-    // 初始绘制
     updateViewMatrix();
-    drawPoints();
-
-    // 矩阵工具函数
-    function createIdentityMatrix() {
-      return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    }
-
-    function createRotationMatrix(angleX, angleY, angleZ) {
-      const cosX = Math.cos(angleX);
-      const sinX = Math.sin(angleX);
-      const cosY = Math.cos(angleY);
-      const sinY = Math.sin(angleY);
-      const cosZ = Math.cos(angleZ);
-      const sinZ = Math.sin(angleZ);
-
-      const rotationX = new Float32Array([
-        1,
-        0,
-        0,
-        0,
-        0,
-        cosX,
-        -sinX,
-        0,
-        0,
-        sinX,
-        cosX,
-        0,
-        0,
-        0,
-        0,
-        1,
-      ]);
-
-      const rotationY = new Float32Array([
-        cosY,
-        0,
-        sinY,
-        0,
-        0,
-        1,
-        0,
-        0,
-        -sinY,
-        0,
-        cosY,
-        0,
-        0,
-        0,
-        0,
-        1,
-      ]);
-
-      const rotationZ = new Float32Array([
-        cosZ,
-        -sinZ,
-        0,
-        0,
-        sinZ,
-        cosZ,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-      ]);
-
-      return multiplyMatrices(
-        multiplyMatrices(rotationZ, rotationY),
-        rotationX,
-      );
-    }
-
-    function createTranslationMatrix(x, y, z) {
-      return new Float32Array([1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1]);
-    }
-
-    function createPerspectiveMatrix(fov, aspect, near, far) {
-      const f = 1.0 / Math.tan(fov * 0.5);
-      const rangeInv = 1.0 / (near - far);
-
-      return new Float32Array([
-        f / aspect,
-        0,
-        0,
-        0,
-        0,
-        f,
-        0,
-        0,
-        0,
-        0,
-        (near + far) * rangeInv,
-        -1,
-        0,
-        0,
-        near * far * rangeInv * 2,
-        0,
-      ]);
-    }
-
-    function multiplyMatrices(a, b) {
-      const result = new Float32Array(16);
-      for (let i = 0; i < 4; i++) {
-        for (let j = 0; j < 4; j++) {
-          result[i * 4 + j] =
-            a[i * 4 + 0] * b[0 * 4 + j] +
-            a[i * 4 + 1] * b[1 * 4 + j] +
-            a[i * 4 + 2] * b[2 * 4 + j] +
-            a[i * 4 + 3] * b[3 * 4 + j];
-        }
-      }
-      return result;
-    }
+    updateProjectionMatrix();
 
     // 更新视图矩阵
     function updateViewMatrix() {
+      // 相机参数
+      let cameraPosition = [0, 0, 5];
+      let cameraTarget = [0, 0, 0];
+      let cameraUp = [0, 1, 0];
+
       const [eyeX, eyeY, eyeZ] = cameraPosition;
       const [centerX, centerY, centerZ] = cameraTarget;
       const [upX, upY, upZ] = cameraUp;
@@ -411,9 +260,47 @@
         ),
         1,
       ]);
+
+      gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix);
+    }
+    // 更新投影矩阵
+    function updateProjectionMatrix() {
+      gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
     }
 
-    // 窗口大小调整处理
+    // 旋转参数
+    let rotationX = 0;
+    let rotationY = 0;
+    let rotationZ = 0;
+    let isDragging = false;
+
+    // 绘制点
+    function drawPoints() {
+      const pointCount = pointData.length / 3;
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      // 更新旋转
+      if (!isDragging) {
+        rotationX += 0.005;
+        rotationY += 0.008;
+        rotationZ += 0.003;
+      }
+
+      // 更新模型矩阵
+      modelMatrix = createRotationMatrix(rotationX, rotationY, rotationZ);
+      // 设置矩阵
+      gl.uniformMatrix4fv(modelMatrixLocation, false, modelMatrix);
+
+      gl.drawArrays(gl.POINT, 0, pointCount);
+
+      // 动画循环
+      requestAnimationFrame(drawPoints);
+    }
+
+    // 初始绘制
+    drawPoints();
+
+    // --------------------------------------------------窗口大小调整处理--------------------------------------------------
     function handleResize() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -424,11 +311,16 @@
         0.1,
         100.0,
       );
+      updateProjectionMatrix();
     }
 
     window.addEventListener("resize", handleResize);
+    // --------------------------------------------------窗口大小调整处理--------------------------------------------------
 
-    // 鼠标事件处理
+    // ----------------------------------------------------鼠标事件处理----------------------------------------------------
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
     canvas.addEventListener("mousedown", (e) => {
       isDragging = true;
       lastMouseX = e.clientX;
@@ -451,6 +343,7 @@
     canvas.addEventListener("mouseup", () => {
       isDragging = false;
     });
+    // ----------------------------------------------------鼠标事件处理----------------------------------------------------
 
     // 将平面化的点渲染修改为具有空间感和可转动的3D效果。以下是具体的改进：
 
