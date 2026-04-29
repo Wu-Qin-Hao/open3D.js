@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Point Rendering Example</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #000;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas"></canvas>
+</body>
+
+<script src="./m4.js"></script>
+
+<script>
+  // 获取canvas元素
+  const canvas = document.getElementById("canvas");
+  // 设置canvas尺寸
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  // 获取WebGL上下文
+  const gl = canvas.getContext("webgl2");
+  // 设置视口大小
+  gl.viewport(0, 0, canvas.width, canvas.height);
+
+  // 创建三角形数据 - 生成3D三角形
+  function generateTriangles() {
+    const points = [];
+    const colors = [];
+
+    // 生成随机三角形
+    for (let i = 0; i < 50; i++) {
+      // 随机起点 (-2 到 2)
+      const x1 = (Math.random() - 0.5) * 4;
+      const y1 = (Math.random() - 0.5) * 4;
+      const z1 = (Math.random() - 0.5) * 4;
+      points.push(x1, y1, z1);
+
+      // 随机终点
+      const x2 = (Math.random() - 0.5) * 4;
+      const y2 = (Math.random() - 0.5) * 4;
+      const z2 = (Math.random() - 0.5) * 4;
+      points.push(x2, y2, z2);
+
+      // 随机颜色
+      const r = Math.random();
+      const g = Math.random();
+      const b = Math.random();
+      // 为三角形的三个点设置相同的颜色
+      colors.push(r, g, b, 1.0);
+      colors.push(r, g, b, 1.0);
+      colors.push(r, g, b, 1.0);
+    }
+
+    return {
+      points: new Float32Array(points),
+      colors: new Float32Array(colors),
+    };
+  }
+
+  // 生成三角形数据
+  const triangleData = generateTriangles();
+  let pointData = triangleData.points;
+  let colorData = triangleData.colors;
+
+  // ------------------------------------------着色器运行固定流水线----------------------------------------
+  // 编写顶点着色器源码
+  const vertexShaderSource = `
+      attribute vec3 aPosition;
+      attribute vec4 aColor;
+      uniform mat4 uModelMatrix;
+      uniform mat4 uViewMatrix;
+      uniform mat4 uProjectionMatrix;
+      varying vec4 vColor;
+      void main() {
+        gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0); // 设置坐标
+        vColor = aColor; // 设置颜色
+      }
+    `;
+  // 编写片段着色器源码
+  const fragmentShaderSource = `
+      precision mediump float;
+      varying vec4 vColor;
+      void main() {
+        gl_FragColor = vColor; // 设置颜色
+      }
+    `;
+
+  // 顶点着色器类型
+  const vsType = gl.VERTEX_SHADER;
+  // 1.创建顶点着色器对象
+  const vsShader = gl.createShader(vsType);
+  // 2.设置顶点着色器源代码
+  gl.shaderSource(vsShader, vertexShaderSource);
+  // 3.编译顶点着色器
+  gl.compileShader(vsShader);
+  // 检查顶点着色器编译状态
+  if (!gl.getShaderParameter(vsShader, gl.COMPILE_STATUS)) {
+    console.error("顶点着色器编译失败:", gl.getShaderInfoLog(vsShader));
+  }
+
+  // 片元着色器类型
+  const fsType = gl.FRAGMENT_SHADER;
+  // 1.创建片段着色器对象
+  const fsShader = gl.createShader(fsType);
+  // 2.设置片段着色器源代码
+  gl.shaderSource(fsShader, fragmentShaderSource);
+  // 3.编译片段着色器
+  gl.compileShader(fsShader);
+  // 检查片段着色器编译状态
+  if (!gl.getShaderParameter(fsShader, gl.COMPILE_STATUS)) {
+    console.error("片段着色器编译失败:", gl.getShaderInfoLog(fsShader));
+  }
+
+  // 4.创建WebGL程序对象
+  const program = gl.createProgram();
+  // 5.将顶点着色器附加到程序
+  gl.attachShader(program, vsShader);
+  // 6.将片段着色器附加到程序
+  gl.attachShader(program, fsShader);
+  // 7.链接程序
+  gl.linkProgram(program);
+  // 检查程序链接状态
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error("程序链接失败:", gl.getProgramInfoLog(program));
+  }
+
+  // 8.使用程序
+  gl.useProgram(program);
+  // ------------------------------------------着色器运行固定流水线----------------------------------------
+
+  // ---------------------------------------传递数据到着色器固定流水线--------------------------------------
+  // 初始化顶点缓冲区
+  const vertexBuffer = gl.createBuffer();
+  // 绑定顶点缓冲区
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  // 将顶点数据上传到GPU
+  gl.bufferData(gl.ARRAY_BUFFER, pointData, gl.STATIC_DRAW);
+  // 获取顶点着色器属性位置
+  const positionLocation = gl.getAttribLocation(program, "aPosition");
+  // 启用顶点着色器属性
+  gl.enableVertexAttribArray(positionLocation);
+  // 设置顶点着色器属性指针
+  gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
+
+  // 颜色缓冲区
+  const colorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, colorData, gl.STATIC_DRAW);
+  const colorLocation = gl.getAttribLocation(program, "aColor");
+  gl.enableVertexAttribArray(colorLocation);
+  gl.vertexAttribPointer(colorLocation, 4, gl.FLOAT, false, 0, 0);
+  // ---------------------------------------传递数据到着色器固定流水线--------------------------------------
+
+  // 矩阵变量
+  let modelMatrix = createIdentityMatrix();
+  let viewMatrix = createIdentityMatrix();
+  let projectionMatrix = createPerspectiveMatrix(
+    Math.PI * 0.5,
+    canvas.width / canvas.height,
+    0.1,
+    100.0,
+  );
+
+  // 获取uniform变量位置
+  const modelMatrixLocation = gl.getUniformLocation(program, "uModelMatrix");
+  const viewMatrixLocation = gl.getUniformLocation(program, "uViewMatrix");
+  const projectionMatrixLocation = gl.getUniformLocation(
+    program,
+    "uProjectionMatrix",
+  );
+
+  updateViewMatrix();
+  updateProjectionMatrix();
+
+  // 更新视图矩阵
+  function updateViewMatrix() {
+    // 相机参数
+    let cameraPosition = [0, 0, 5];
+    let cameraTarget = [0, 0, 0];
+    let cameraUp = [0, 1, 0];
+
+    const [eyeX, eyeY, eyeZ] = cameraPosition;
+    const [centerX, centerY, centerZ] = cameraTarget;
+    const [upX, upY, upZ] = cameraUp;
+
+    const zAxis = [eyeX - centerX, eyeY - centerY, eyeZ - centerZ];
+    const zLength = Math.sqrt(
+      zAxis[0] * zAxis[0] + zAxis[1] * zAxis[1] + zAxis[2] * zAxis[2],
+    );
+    const normalizedZ = [
+      zAxis[0] / zLength,
+      zAxis[1] / zLength,
+      zAxis[2] / zLength,
+    ];
+
+    const xAxis = [
+      upY * normalizedZ[2] - upZ * normalizedZ[1],
+      upZ * normalizedZ[0] - upX * normalizedZ[2],
+      upX * normalizedZ[1] - upY * normalizedZ[0],
+    ];
+    const xLength = Math.sqrt(
+      xAxis[0] * xAxis[0] + xAxis[1] * xAxis[1] + xAxis[2] * xAxis[2],
+    );
+    const normalizedX = [
+      xAxis[0] / xLength,
+      xAxis[1] / xLength,
+      xAxis[2] / xLength,
+    ];
+
+    const yAxis = [
+      normalizedZ[1] * normalizedX[2] - normalizedZ[2] * normalizedX[1],
+      normalizedZ[2] * normalizedX[0] - normalizedZ[0] * normalizedX[2],
+      normalizedZ[0] * normalizedX[1] - normalizedZ[1] * normalizedX[0],
+    ];
+
+    viewMatrix = new Float32Array([
+      normalizedX[0],
+      yAxis[0],
+      normalizedZ[0],
+      0,
+      normalizedX[1],
+      yAxis[1],
+      normalizedZ[1],
+      0,
+      normalizedX[2],
+      yAxis[2],
+      normalizedZ[2],
+      0,
+      -(
+        normalizedX[0] * eyeX +
+        normalizedX[1] * eyeY +
+        normalizedX[2] * eyeZ
+      ),
+      -(yAxis[0] * eyeX + yAxis[1] * eyeY + yAxis[2] * eyeZ),
+      -(
+        normalizedZ[0] * eyeX +
+        normalizedZ[1] * eyeY +
+        normalizedZ[2] * eyeZ
+      ),
+      1,
+    ]);
+
+    gl.uniformMatrix4fv(viewMatrixLocation, false, viewMatrix);
+  }
+  // 更新投影矩阵
+  function updateProjectionMatrix() {
+    gl.uniformMatrix4fv(projectionMatrixLocation, false, projectionMatrix);
+  }
+
+  // 旋转参数
+  let rotationX = 0;
+  let rotationY = 0;
+  let rotationZ = 0;
+  let isDragging = false;
+
+  // 绘制三角形
+  function drawTriangles() {
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // 更新旋转
+    if (!isDragging) {
+      rotationX += 0.005;
+      rotationY += 0.008;
+      rotationZ += 0.003;
+    }
+
+    // 更新模型矩阵
+    modelMatrix = createRotationMatrix(rotationX, rotationY, rotationZ);
+    // 设置矩阵
+    gl.uniformMatrix4fv(modelMatrixLocation, false, modelMatrix);
+
+    const numTriangles = pointData.length / 3;
+    gl.drawArrays(gl.TRIANGLES, 0, numTriangles);
+
+    // 动画循环
+    requestAnimationFrame(drawTriangles);
+  }
+
+  // 初始绘制
+  drawTriangles();
+
+  // --------------------------------------------------窗口大小调整处理--------------------------------------------------
+  function handleResize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    projectionMatrix = createPerspectiveMatrix(
+      Math.PI * 0.5,
+      canvas.width / canvas.height,
+      0.1,
+      100.0,
+    );
+    updateProjectionMatrix();
+  }
+
+  window.addEventListener("resize", handleResize);
+  // --------------------------------------------------窗口大小调整处理--------------------------------------------------
+
+  // ----------------------------------------------------鼠标事件处理----------------------------------------------------
+  let lastMouseX = 0;
+  let lastMouseY = 0;
+
+  canvas.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (isDragging) {
+      const deltaX = e.clientX - lastMouseX;
+      const deltaY = e.clientY - lastMouseY;
+
+      rotationY += deltaX * 0.01;
+      rotationX += deltaY * 0.01;
+
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    }
+  });
+
+  canvas.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
+  // ----------------------------------------------------鼠标事件处理----------------------------------------------------
+</script>
+</script>
+
+</html>
